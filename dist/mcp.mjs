@@ -15557,9 +15557,17 @@ async function discoverThreads(query, limit = 15) {
   if (!await isLoggedIn(page) || await isLoginWall(page)) {
     return { ok: false, error: "login_required", hint: "Call setup_login first: the browser needs you logged into X. A clean empty result here usually means you're logged out, not that there are no threads." };
   }
-  if (!await waitForShell(page)) {
+  const appeared = await Promise.race([
+    page.waitForSelector('article[data-testid="tweet"]', { timeout: 2e4 }).then(() => "tweets").catch(() => null),
+    page.waitForSelector('[data-testid="empty_state_header_text"]', { timeout: 2e4 }).then(() => "empty").catch(() => null)
+  ]);
+  if (appeared === null) {
     return { ok: false, error: "render_timeout", rate_limit: rl().n429 };
   }
+  if (appeared === "empty") {
+    return { ok: true, query, count: 0, rate_limit: rl().n429, threads: [], note: "X returned no results for this query (genuine empty state)." };
+  }
+  await page.waitForTimeout(1500);
   const threads = await page.evaluate((max) => {
     const out = [];
     const seen = /* @__PURE__ */ new Set();
@@ -15595,7 +15603,9 @@ async function readThread(url, maxReplies = 8) {
   await page.goto(url, { waitUntil: "domcontentloaded", timeout: 45e3 }).catch(() => {
   });
   if (!await isLoggedIn(page) || await isLoginWall(page)) return { ok: false, error: "login_required" };
-  if (!await waitForShell(page)) return { ok: false, error: "render_timeout", rate_limit: rl().n429 };
+  const ok = await page.waitForSelector('article[data-testid="tweet"]', { timeout: 2e4 }).then(() => true).catch(() => false);
+  if (!ok) return { ok: false, error: "render_timeout", rate_limit: rl().n429 };
+  await page.waitForTimeout(1200);
   const data = await page.evaluate((max) => {
     const arts = [...document.querySelectorAll('article[data-testid="tweet"]')];
     const parse3 = (a) => {

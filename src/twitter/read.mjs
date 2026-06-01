@@ -10,7 +10,14 @@ export async function readThread(url, maxReplies = 8) {
   await page.goto(url, { waitUntil: "domcontentloaded", timeout: 45000 }).catch(() => {});
 
   if (!(await isLoggedIn(page)) || (await isLoginWall(page))) return { ok: false, error: "login_required" };
-  if (!(await waitForShell(page))) return { ok: false, error: "render_timeout", rate_limit: rl().n429 };
+  // Wait for an actual tweet article, not just <main> (which is present
+  // instantly from the previous page and causes a premature empty read).
+  const ok = await page
+    .waitForSelector('article[data-testid="tweet"]', { timeout: 20000 })
+    .then(() => true)
+    .catch(() => false);
+  if (!ok) return { ok: false, error: "render_timeout", rate_limit: rl().n429 };
+  await page.waitForTimeout(1200);
 
   const data = await page.evaluate((max) => {
     const arts = [...document.querySelectorAll('article[data-testid="tweet"]')];
