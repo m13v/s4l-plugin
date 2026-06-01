@@ -1,0 +1,47 @@
+{
+  "manifest_version": "0.2",
+  "name": "s4l-plugin",
+  "display_name": "S4L: Twitter reply co-pilot",
+  "version": "2.0.1",
+  "description": "Discover Twitter threads worth replying to, draft grounded replies in your voice, and post them through your own logged-in browser. Human-in-the-loop, approval-gated.",
+  "author": {
+    "name": "mediar-ai",
+    "url": "https://s4l.ai"
+  },
+  "homepage": "https://s4l.ai",
+  "license": "MIT",
+  "keywords": ["twitter", "x", "social", "engagement", "playwright"],
+  "server": {
+    "type": "node",
+    "entry_point": "dist/mcp.mjs",
+    "mcp_config": {
+      "command": "node",
+      "args": ["${__dirname}/dist/mcp.mjs"],
+      "env": {}
+    }
+  },
+  "tools": [
+    {
+      "name": "setup_login",
+      "description": "Getting-started / login check. Opens the headed browser at X and reports whether the user's session is logged in. Call FIRST before any other tool, and any time a tool reports a login wall."
+    },
+    {
+      "name": "discover_threads",
+      "description": "Search X/Twitter's Live tab for recent threads matching a query and return structured candidates (url, author, text, posted_at)."
+    },
+    {
+      "name": "read_thread",
+      "description": "Open a specific tweet URL and return the original post plus top replies so a reply can be grounded in the actual conversation."
+    },
+    {
+      "name": "post_comment",
+      "description": "Post a reply to a tweet through the user's own logged-in browser. Only after the user has explicitly approved the exact text."
+    }
+  ],
+  "compatibility": {
+    "platforms": ["darwin", "win32"],
+    "runtimes": {
+      "node": ">=18"
+    }
+  }
+}

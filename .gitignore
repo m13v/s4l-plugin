@@ -7,3 +7,5 @@
 .social-autoposter/
 chrome-profile/
 .env
+# MCPB build artifacts (staged copy of node_modules + the packed bundle)
+build/
