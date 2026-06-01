@@ -1,0 +1,12 @@
+{
+  "name": "s4l-local",
+  "description": "Local marketplace for the S4L Twitter engagement co-pilot plugin.",
+  "owner": { "name": "mediar-ai", "url": "https://s4l.ai" },
+  "plugins": [
+    {
+      "name": "s4l-plugin",
+      "source": "./",
+      "description": "Discover Twitter threads worth replying to, draft grounded replies in your voice, and post them through your own logged-in browser. Human-in-the-loop, approval-gated."
+    }
+  ]
+}

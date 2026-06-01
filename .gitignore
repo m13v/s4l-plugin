@@ -1,0 +1,9 @@
+# node_modules IS committed on purpose: this is a distributable Claude plugin.
+# The bundled dist/mcp.mjs still requires playwright at runtime, so deps must
+# travel with the repo for the marketplace-clone install to work offline.
+# (Chromium itself is NOT committed — it is fetched on first run.)
+*.log
+.DS_Store
+.social-autoposter/
+chrome-profile/
+.env

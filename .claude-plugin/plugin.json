@@ -1,0 +1,9 @@
+{
+  "name": "s4l-plugin",
+  "version": "2.0.0",
+  "description": "Discover Twitter threads worth replying to, draft grounded replies in your voice, and post them through your own logged-in browser. Human-in-the-loop, approval-gated.",
+  "author": { "name": "mediar-ai", "url": "https://s4l.ai" },
+  "homepage": "https://s4l.ai",
+  "license": "MIT",
+  "keywords": ["twitter", "x", "social", "engagement", "playwright"]
+}
