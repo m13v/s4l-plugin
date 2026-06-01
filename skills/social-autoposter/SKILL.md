@@ -37,6 +37,10 @@ of the loop below, then ask the Step 0 question so you're ready to help.
 
 ## First-run check
 
+If the s4l tools (`setup_login`, `discover_threads`, etc.) aren't available after install,
+tell the user to fully quit and reopen Claude (Cmd+Q, not just close the window): MCP
+servers load only on a complete restart. Say it once, then continue.
+
 Before the first `discover_threads`/`read_thread`/`post_comment` of a session, and any
 time a tool reports a login wall, call `setup_login`. It opens a headed browser at X and
 returns `logged_in`:
