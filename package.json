@@ -1,6 +1,6 @@
 {
   "name": "social-autoposter",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "Zero-dependency Twitter engagement co-pilot for Claude. Discovers threads, drafts grounded replies, posts through your own logged-in browser.",
   "type": "module",
   "bin": {

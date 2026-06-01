@@ -2,7 +2,7 @@
 // ONE DOM read (the harness trick) instead of screenshot-per-step.
 
 import { getPage } from "../browser.mjs";
-import { isLoginWall, watchRateLimit, waitForShell } from "./gates.mjs";
+import { isLoggedIn, isLoginWall, watchRateLimit, waitForShell } from "./gates.mjs";
 
 /**
  * @param {string} query  raw search query (operators allowed, e.g. "ai agents min_faves:5")
@@ -17,8 +17,8 @@ export async function discoverThreads(query, limit = 15) {
   const url = `https://x.com/search?q=${encodeURIComponent(query)}&src=typed_query&f=live`;
   await page.goto(url, { waitUntil: "domcontentloaded", timeout: 45000 }).catch(() => {});
 
-  if (await isLoginWall(page)) {
-    return { ok: false, error: "login_required", hint: "Run connect first: the browser needs you logged into X." };
+  if (!(await isLoggedIn(page)) || (await isLoginWall(page))) {
+    return { ok: false, error: "login_required", hint: "Call setup_login first: the browser needs you logged into X. A clean empty result here usually means you're logged out, not that there are no threads." };
   }
   if (!(await waitForShell(page))) {
     return { ok: false, error: "render_timeout", rate_limit: rl().n429 };

@@ -6938,7 +6938,6 @@ function $constructor(name, initializer3, params) {
   Object.defineProperty(_, "name", { value: name });
   return _;
 }
-var $brand = Symbol("zod_brand");
 var $ZodAsyncError = class extends Error {
   constructor() {
     super(`Encountered Promise during synchronous parse. Use .parseAsync() instead.`);
@@ -9887,8 +9886,6 @@ function en_default() {
 
 // node_modules/zod/v4/core/registries.js
 var _a2;
-var $output = Symbol("ZodOutput");
-var $input = Symbol("ZodInput");
 var $ZodRegistry = class {
   constructor() {
     this._map = /* @__PURE__ */ new WeakMap();
@@ -13681,9 +13678,6 @@ function isTerminal(status) {
   return status === "completed" || status === "failed" || status === "cancelled";
 }
 
-// node_modules/zod-to-json-schema/dist/esm/Options.js
-var ignoreOverride = Symbol("Let zodToJsonSchema decide on which parser to use");
-
 // node_modules/zod-to-json-schema/dist/esm/parsers/string.js
 var ALPHA_NUMERIC = new Set("ABCDEFGHIJKLMNOPQRSTUVXYZabcdefghijklmnopqrstuvxyz0123456789");
 
@@ -15518,6 +15512,16 @@ async function closeBrowser() {
 }
 
 // src/twitter/gates.mjs
+async function isLoggedIn(page) {
+  try {
+    const cookies = await page.context().cookies(["https://x.com", "https://twitter.com"]);
+    return cookies.some(
+      (c) => c.name === "auth_token" && typeof c.value === "string" && c.value.length > 10
+    );
+  } catch {
+    return false;
+  }
+}
 async function isLoginWall(page) {
   if (/\/(login|i\/flow\/login)/.test(page.url())) return true;
   const loginBtn = await page.locator('[data-testid="loginButton"]').count().catch(() => 0);
@@ -15550,8 +15554,8 @@ async function discoverThreads(query, limit = 15) {
   const url = `https://x.com/search?q=${encodeURIComponent(query)}&src=typed_query&f=live`;
   await page.goto(url, { waitUntil: "domcontentloaded", timeout: 45e3 }).catch(() => {
   });
-  if (await isLoginWall(page)) {
-    return { ok: false, error: "login_required", hint: "Run connect first: the browser needs you logged into X." };
+  if (!await isLoggedIn(page) || await isLoginWall(page)) {
+    return { ok: false, error: "login_required", hint: "Call setup_login first: the browser needs you logged into X. A clean empty result here usually means you're logged out, not that there are no threads." };
   }
   if (!await waitForShell(page)) {
     return { ok: false, error: "render_timeout", rate_limit: rl().n429 };
@@ -15590,7 +15594,7 @@ async function readThread(url, maxReplies = 8) {
   const rl = watchRateLimit(page);
   await page.goto(url, { waitUntil: "domcontentloaded", timeout: 45e3 }).catch(() => {
   });
-  if (await isLoginWall(page)) return { ok: false, error: "login_required" };
+  if (!await isLoggedIn(page) || await isLoginWall(page)) return { ok: false, error: "login_required" };
   if (!await waitForShell(page)) return { ok: false, error: "render_timeout", rate_limit: rl().n429 };
   const data = await page.evaluate((max) => {
     const arts = [...document.querySelectorAll('article[data-testid="tweet"]')];
@@ -15635,7 +15639,7 @@ async function postComment(url, text) {
   const rl = watchRateLimit(page);
   await page.goto(url, { waitUntil: "domcontentloaded", timeout: 45e3 }).catch(() => {
   });
-  if (await isLoginWall(page)) return { ok: false, error: "login_required" };
+  if (!await isLoggedIn(page) || await isLoginWall(page)) return { ok: false, error: "login_required" };
   if (!await waitForShell(page)) return { ok: false, error: "render_timeout", rate_limit: rl().n429 };
   const box = await findReplyBox(page);
   if (!box) return { ok: false, error: "reply_box_not_found", rate_limit: rl().n429 };
@@ -15663,18 +15667,17 @@ async function setupLogin() {
   });
   await page.bringToFront().catch(() => {
   });
-  if (await isLoginWall(page)) {
+  if (await isLoggedIn(page)) {
     return {
       ok: true,
-      logged_in: false,
-      message: "A Chrome window is open at X. Log in there yourself (username, password, 2FA). When the home timeline shows, ask me to confirm and I'll re-check."
+      logged_in: true,
+      message: "Logged in. Session saved \u2014 you can discover threads and post."
     };
   }
-  const ready = await waitForShell(page, 8e3);
   return {
     ok: true,
-    logged_in: ready,
-    message: ready ? "Logged in. Session saved \u2014 you can discover threads and post." : "Couldn't confirm the timeline. If you're not logged in, log in in the open window, then ask me to re-check."
+    logged_in: false,
+    message: "A Chrome window is open at X and you are NOT logged in yet. Log in there yourself (username, password, 2FA) in that window. When your home timeline shows, ask me to confirm and I'll re-check."
   };
 }
 

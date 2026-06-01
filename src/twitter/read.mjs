@@ -2,14 +2,14 @@
 // instead of replying to a headline it can't see.
 
 import { getPage } from "../browser.mjs";
-import { isLoginWall, watchRateLimit, waitForShell } from "./gates.mjs";
+import { isLoggedIn, isLoginWall, watchRateLimit, waitForShell } from "./gates.mjs";
 
 export async function readThread(url, maxReplies = 8) {
   const page = await getPage();
   const rl = watchRateLimit(page);
   await page.goto(url, { waitUntil: "domcontentloaded", timeout: 45000 }).catch(() => {});
 
-  if (await isLoginWall(page)) return { ok: false, error: "login_required" };
+  if (!(await isLoggedIn(page)) || (await isLoginWall(page))) return { ok: false, error: "login_required" };
   if (!(await waitForShell(page))) return { ok: false, error: "render_timeout", rate_limit: rl().n429 };
 
   const data = await page.evaluate((max) => {

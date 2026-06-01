@@ -5,7 +5,7 @@
 //   login wall  -> [data-testid="loginButton"]
 
 import { getPage } from "../browser.mjs";
-import { isLoginWall, watchRateLimit, waitForShell } from "./gates.mjs";
+import { isLoggedIn, isLoginWall, watchRateLimit, waitForShell } from "./gates.mjs";
 
 const REPLY_BOX = [
   '[data-testid="tweetTextarea_0"]',
@@ -32,7 +32,7 @@ export async function postComment(url, text) {
   const rl = watchRateLimit(page);
 
   await page.goto(url, { waitUntil: "domcontentloaded", timeout: 45000 }).catch(() => {});
-  if (await isLoginWall(page)) return { ok: false, error: "login_required" };
+  if (!(await isLoggedIn(page)) || (await isLoginWall(page))) return { ok: false, error: "login_required" };
   if (!(await waitForShell(page))) return { ok: false, error: "render_timeout", rate_limit: rl().n429 };
 
   const box = await findReplyBox(page);

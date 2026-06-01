@@ -7,7 +7,7 @@
 // their own browser themselves.
 
 import { getPage } from "../browser.mjs";
-import { isLoginWall, waitForShell } from "./gates.mjs";
+import { isLoggedIn } from "./gates.mjs";
 
 export async function setupLogin() {
   const page = await getPage({ headed: true });
@@ -16,23 +16,23 @@ export async function setupLogin() {
     .catch(() => {});
   await page.bringToFront().catch(() => {});
 
-  if (await isLoginWall(page)) {
+  // Authoritative check: a real `auth_token` cookie means a real session.
+  // We do NOT rely on seeing <main> (the logged-out splash renders it too,
+  // which is what caused setup_login to falsely report logged_in:true).
+  if (await isLoggedIn(page)) {
     return {
       ok: true,
-      logged_in: false,
-      message:
-        "A Chrome window is open at X. Log in there yourself (username, password, 2FA). " +
-        "When the home timeline shows, ask me to confirm and I'll re-check.",
+      logged_in: true,
+      message: "Logged in. Session saved — you can discover threads and post.",
     };
   }
 
-  // Not on a login wall — make sure we actually see the timeline shell.
-  const ready = await waitForShell(page, 8000);
   return {
     ok: true,
-    logged_in: ready,
-    message: ready
-      ? "Logged in. Session saved — you can discover threads and post."
-      : "Couldn't confirm the timeline. If you're not logged in, log in in the open window, then ask me to re-check.",
+    logged_in: false,
+    message:
+      "A Chrome window is open at X and you are NOT logged in yet. Log in there " +
+      "yourself (username, password, 2FA) in that window. When your home timeline " +
+      "shows, ask me to confirm and I'll re-check.",
   };
 }
