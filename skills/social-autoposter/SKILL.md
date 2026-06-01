@@ -37,17 +37,18 @@ of the loop below, then ask the Step 0 question so you're ready to help.
 
 ## First-run check
 
-If a tool returns `login_required`, the user needs to log into X once. Tell them to
-run the bundled connect command in their terminal (NOT an npm package — there is no
-`social-autoposter` npm package for this plugin):
+Before the first `discover_threads`/`read_thread`/`post_comment` of a session, and any
+time a tool reports a login wall, call `setup_login`. It opens a headed browser at X and
+returns `logged_in`:
 
-```
-node "<plugin-dir>/bin/cli.mjs" connect
-```
+- `logged_in: true` — proceed with the loop.
+- `logged_in: false` — a Chrome window is already open at X. Tell the user to log in
+  themselves in that window (username, password, 2FA), then call `setup_login` again to
+  confirm. The session persists in `~/.s4l-plugin/chrome-profile`, so this is one-time.
 
-`<plugin-dir>` is this plugin's install directory (the folder containing `.mcp.json`).
-A headed browser opens; they log into X, press Enter, and the session persists. Then
-retry the tool.
+Never ask the user for their X password, and never try to import or decrypt cookies; the
+user logs into their own browser by hand. (Terminal fallback if the tool can't open a
+window: `node "<plugin-dir>/bin/cli.mjs" connect`.)
 
 ## The loop
 

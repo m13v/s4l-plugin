@@ -11,9 +11,16 @@ import {
 import { discoverThreads } from "./twitter/search.mjs";
 import { readThread } from "./twitter/read.mjs";
 import { postComment } from "./twitter/post.mjs";
+import { setupLogin } from "./twitter/setup.mjs";
 import { closeBrowser } from "./browser.mjs";
 
 const TOOLS = [
+  {
+    name: "setup_login",
+    description:
+      "Getting-started / login check. Opens the headed browser at X and reports whether the user's session is logged in. Call this FIRST before any other tool, and any time a tool reports a login wall. If logged_in is false, tell the user to log in themselves in the open window (incl. 2FA), then call this again to confirm. No arguments.",
+    inputSchema: { type: "object", properties: {} },
+  },
   {
     name: "discover_threads",
     description:
@@ -66,7 +73,9 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
   const { name, arguments: args = {} } = req.params;
   let result;
   try {
-    if (name === "discover_threads") {
+    if (name === "setup_login") {
+      result = await setupLogin();
+    } else if (name === "discover_threads") {
       result = await discoverThreads(args.query, args.limit ?? 15);
     } else if (name === "read_thread") {
       result = await readThread(args.url, args.max_replies ?? 8);
@@ -86,4 +95,4 @@ process.on("SIGINT", async () => { await closeBrowser(); process.exit(0); });
 
 const transport = new StdioServerTransport();
 await server.connect(transport);
-console.error("[s4l-plugin] MCP server ready (3 tools).");
+console.error("[s4l-plugin] MCP server ready (4 tools).");

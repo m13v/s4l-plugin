@@ -15656,8 +15656,35 @@ async function postComment(url, text) {
   return { ok: true, parent: url, reply_url: replyUrl, rate_limit: rl().n429 };
 }
 
+// src/twitter/setup.mjs
+async function setupLogin() {
+  const page = await getPage({ headed: true });
+  await page.goto("https://x.com/home", { waitUntil: "domcontentloaded" }).catch(() => {
+  });
+  await page.bringToFront().catch(() => {
+  });
+  if (await isLoginWall(page)) {
+    return {
+      ok: true,
+      logged_in: false,
+      message: "A Chrome window is open at X. Log in there yourself (username, password, 2FA). When the home timeline shows, ask me to confirm and I'll re-check."
+    };
+  }
+  const ready = await waitForShell(page, 8e3);
+  return {
+    ok: true,
+    logged_in: ready,
+    message: ready ? "Logged in. Session saved \u2014 you can discover threads and post." : "Couldn't confirm the timeline. If you're not logged in, log in in the open window, then ask me to re-check."
+  };
+}
+
 // src/mcp.mjs
 var TOOLS = [
+  {
+    name: "setup_login",
+    description: "Getting-started / login check. Opens the headed browser at X and reports whether the user's session is logged in. Call this FIRST before any other tool, and any time a tool reports a login wall. If logged_in is false, tell the user to log in themselves in the open window (incl. 2FA), then call this again to confirm. No arguments.",
+    inputSchema: { type: "object", properties: {} }
+  },
   {
     name: "discover_threads",
     description: "Search X/Twitter's Live tab for recent threads matching a query and return structured candidates (url, author, text, posted_at). Use Twitter search operators freely (e.g. min_faves:5, -filter:replies, lang:en).",
@@ -15704,7 +15731,9 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
   const { name, arguments: args = {} } = req.params;
   let result;
   try {
-    if (name === "discover_threads") {
+    if (name === "setup_login") {
+      result = await setupLogin();
+    } else if (name === "discover_threads") {
       result = await discoverThreads(args.query, args.limit ?? 15);
     } else if (name === "read_thread") {
       result = await readThread(args.url, args.max_replies ?? 8);
@@ -15728,4 +15757,4 @@ process.on("SIGINT", async () => {
 });
 var transport = new StdioServerTransport();
 await server.connect(transport);
-console.error("[s4l-plugin] MCP server ready (3 tools).");
+console.error("[s4l-plugin] MCP server ready (4 tools).");
